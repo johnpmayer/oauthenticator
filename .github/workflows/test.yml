@@ -34,7 +34,6 @@ jobs:
       fail-fast: false
       matrix:
         python:
-          - "3.7"
           - "3.8"
           - "3.9"
           - "3.10"
@@ -51,7 +50,7 @@ jobs:
 
       - name: Install Python dependencies
         run: |
-          pip install --upgrade . -r test-requirements.txt
+          pip install ".[test]"
           pip list
 
       - name: Downgrade to oldest dependencies
@@ -66,8 +65,7 @@ jobs:
 
       - name: Run tests
         run: |
-          pytest -v --color=yes --cov=oauthenticator oauthenticator
+          pytest
 
-      - name: Submit codecov report
-        run: |
-          codecov
+      # GitHub action reference: https://github.com/codecov/codecov-action
+      - uses: codecov/codecov-action@v3

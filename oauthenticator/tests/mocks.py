@@ -33,7 +33,7 @@ class MockAsyncHTTPClient(SimpleAsyncHTTPClient):
 
         Args:
             host (str): the host to mock (e.g. 'api.github.com')
-            paths (list(str|regex, callable)): a list of paths (or regexps for paths)
+            paths (list[(str|regex, callable)]): a list of paths (or regexps for paths)
                 and callables to be called for those paths.
                 The mock handlers will receive the request as their only argument.
 
@@ -47,7 +47,7 @@ class MockAsyncHTTPClient(SimpleAsyncHTTPClient):
         Example::
 
             client.add_host('api.github.com', [
-                ('/user': lambda request: {'login': 'name'})
+                ('/user', lambda request: {'login': 'name'})
             ])
         """
         self.hosts[host] = paths
@@ -140,30 +140,17 @@ def setup_oauth_mock(
         Replies with JSON model for the token.
         """
         assert request.method == 'POST', request.method
-        if token_request_style == 'json':
-            body = request.body.decode('utf8')
-            try:
-                body = json.loads(body)
-            except ValueError:
-                return HTTPResponse(
-                    request=request,
-                    code=400,
-                    reason="Body not JSON: %r" % body,
-                )
-            else:
-                code = body['code']
-        else:
-            query = urlparse(request.url).query
-            if not query:
-                query = request.body.decode('utf8')
-            query = parse_qs(query)
-            if 'code' not in query:
-                return HTTPResponse(
-                    request=request,
-                    code=400,
-                    reason=f"No code in access token request: url={request.url}, body={request.body}",
-                )
-            code = query['code'][0]
+        query = urlparse(request.url).query
+        if not query:
+            query = request.body.decode('utf8')
+        query = parse_qs(query)
+        if 'code' not in query:
+            return HTTPResponse(
+                request=request,
+                code=400,
+                reason=f"No code in access token request: url={request.url}, body={request.body}",
+            )
+        code = query['code'][0]
         if code not in oauth_codes:
             return HTTPResponse(
                 request=request, code=403, reason=f"No such code: {code}"
@@ -266,5 +253,5 @@ async def no_code_test(authenticator):
     handler = Mock(spec=web.RequestHandler)
     handler.get_argument = Mock(return_value=None)
     with pytest.raises(web.HTTPError) as exc:
-        name = await authenticator.authenticate(handler)
+        await authenticator.get_authenticated_user(handler, None)
     assert exc.value.status_code == 400

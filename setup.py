@@ -5,7 +5,6 @@
 # Minimal Python version sanity check (from IPython/Jupyterhub)
 # -----------------------------------------------------------------------------
 
-import os
 import sys
 
 from setuptools import find_packages, setup
@@ -25,19 +24,10 @@ class bdist_egg_disabled(bdist_egg):
         )
 
 
-pjoin = os.path.join
-here = os.path.abspath(os.path.dirname(__file__))
-
-# Get the current package version.
-version_ns = {}
-with open(pjoin(here, 'oauthenticator', '_version.py')) as f:
-    exec(f.read(), {}, version_ns)
-
-
 setup_args = dict(
     name='oauthenticator',
     packages=find_packages(),
-    version=version_ns['__version__'],
+    version="16.0.4.dev",
     description="OAuthenticator: Authenticate JupyterHub users with common OAuth providers",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
@@ -47,7 +37,7 @@ setup_args = dict(
     license="BSD",
     platforms="Linux, Mac OS X",
     keywords=['Interactive', 'Interpreter', 'Shell', 'Web'],
-    python_requires=">=3.7",
+    python_requires=">=3.8",
     include_package_data=True,
     entry_points={
         'jupyterhub.authenticators': [
@@ -100,7 +90,31 @@ with open('requirements.txt') as f:
 
 
 setup_args['extras_require'] = {
-    'googlegroups': ['google-api-python-client', 'google-auth-oauthlib'],
+    # azuread is required for use of AzureADOAuthenticator
+    'azuread': ['pyjwt>=2'],
+    # googlegroups is required for use of GoogleOAuthenticator configured with
+    # either admin_google_groups and/or allowed_google_groups.
+    'googlegroups': [
+        'google-api-python-client',
+        'google-auth-oauthlib',
+    ],
+    # mediawiki is required for use of MWOAuthenticator
+    'mediawiki': ['mwoauth>=0.3.8'],
+    # test is required to run tests, and includes all authenticator specific
+    # dependencies above.
+    'test': [
+        'pytest>=2.8',
+        'pytest-asyncio',
+        'pytest-cov',
+        'requests-mock',
+        # dependencies from azuread:
+        'pyjwt>=2',
+        # dependencies from googlegroups:
+        'google-api-python-client',
+        'google-auth-oauthlib',
+        # dependencies from mediawiki:
+        'mwoauth>=0.3.8',
+    ],
 }
 
 
