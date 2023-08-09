@@ -1057,7 +1057,21 @@ class OAuthenticator(Authenticator):
         """
 
         # exchange the oauth code for an access token and get the JSON with info about it
-        token_info = await self.get_token_info(handler, params)
+
+        ## HACK - workaround flakiness in our IdP
+        token_info = None
+        num_attempts = 5
+        for attempt in range(num_attempts):
+            try:
+                token_info = await self.get_token_info(handler, params)
+            except Exception as e:
+                print(f"Attempt {attempt + 1} failed: {e}")
+                if attempt + 1 >= num_attempts:
+                    print("All attempts failed, giving up")
+                    raise
+            else:
+                break
+
         # use the access_token to get userdata info
         user_info = await self.token_to_user(token_info)
         # extract the username out of the user_info dict and normalize it
