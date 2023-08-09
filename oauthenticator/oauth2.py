@@ -1050,6 +1050,8 @@ class OAuthenticator(Authenticator):
             auth_state['refresh_token']
         )
 
+        print("Refresh Token Params", refresh_token_params)
+
         try:
             return await self._oauth_call(handler, refresh_token_params, **kwargs)
         except Exception as e:
