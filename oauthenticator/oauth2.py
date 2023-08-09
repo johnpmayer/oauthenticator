@@ -1049,7 +1049,12 @@ class OAuthenticator(Authenticator):
         refresh_token_params = self.build_refresh_token_request_params(
             auth_state['refresh_token']
         )
-        return await self._oauth_call(handler, refresh_token_params, **kwargs)
+
+        try:
+            return await self._oauth_call(handler, refresh_token_params, **kwargs)
+        except Exception as e:
+            self.log.error(f"Failed to refresh user {user.name}: {e}")
+            return False
 
     async def _oauth_call(self, handler, params, data=None, **kwargs):
         """
